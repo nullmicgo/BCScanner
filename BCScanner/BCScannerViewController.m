@@ -317,66 +317,72 @@ NSString *const BCScannerDataMatrixCode = @"BCScannerDataMatrixCode";
 
 - (void)layoutHUD
 {
-	[self.hudImageView.layer removeAnimationForKey:@"hudAnimation"];
-	
-	self.hudImageView.hidden = (self.codeTypes.count == 0);
-	
-	if (self.codeTypes.count == 0) {
-		return;
-	}
-	
-	UIEdgeInsets padding = UIEdgeInsetsMake(20.0f, 20.0f, 20.0f, 20.0f);
-	CGRect squareHUDRect = UIEdgeInsetsInsetRect(self.previewView.bounds, padding);
-	squareHUDRect.origin.y += self.topLayoutGuide.length;
-	squareHUDRect.size.height -= self.topLayoutGuide.length + self.bottomLayoutGuide.length;
-	if (CGRectGetHeight(squareHUDRect) > CGRectGetWidth(squareHUDRect)) {
-		squareHUDRect.origin.y += (CGRectGetHeight(squareHUDRect) - CGRectGetWidth(squareHUDRect)) * .5f;
-		squareHUDRect.size.height = CGRectGetWidth(squareHUDRect);
-	} else {
-		squareHUDRect.origin.x += (CGRectGetWidth(squareHUDRect) - CGRectGetHeight(squareHUDRect)) * .5f;
-		squareHUDRect.size.width = CGRectGetHeight(squareHUDRect);
-	}
-	self.hudImageView.frame = squareHUDRect;
-	
-	CGRect baseBounds = self.hudImageView.layer.bounds;
-	
-	NSMutableSet *takenAspectRatios = [NSMutableSet set];
-	NSMutableArray *animationKeyframes = [NSMutableArray array];
-	for (NSString *codeType in self.codeTypes) {
-		NSNumber *aspectRatio = [[self class] aspectRatioForCode:codeType];
-		if (aspectRatio == nil || [takenAspectRatios containsObject:aspectRatio]) {
-			continue; // skip unknown as well as unsupported and already present code types
-		}
-		[takenAspectRatios addObject:aspectRatio];
-		CGRect codeTypeBounds = baseBounds;
-		float rawAspectRatio = [aspectRatio floatValue];
-		if (rawAspectRatio > 1.0) {
-			codeTypeBounds.size.height /= rawAspectRatio;
-		} else {
-			codeTypeBounds.size.width *= rawAspectRatio;
-		}
-		[animationKeyframes addObject:[NSValue valueWithCGRect:codeTypeBounds]];
-	}
-	
-	// sort based on the rects area to prevent it from animating between small and large rects back and forth
-	[animationKeyframes sortUsingComparator:^NSComparisonResult(NSValue *obj1, NSValue *obj2) {
-		CGRect obj1Rect = [obj1 CGRectValue];
-		CGRect obj2Rect = [obj2 CGRectValue];
-		
-		CGFloat obj1Area = CGRectGetWidth(obj1Rect) * CGRectGetHeight(obj1Rect);
-		CGFloat obj2Area = CGRectGetWidth(obj2Rect) * CGRectGetHeight(obj2Rect);
-		
-		return [@(obj1Area) compare:@(obj2Area)];
-	}];
-	
-	[animationKeyframes addObject:animationKeyframes.firstObject]; // go around to prevent animation from jumping at the end
-	
-	CAKeyframeAnimation *hudAnimation = [CAKeyframeAnimation animationWithKeyPath:@"bounds"];
-	hudAnimation.values = animationKeyframes;
-	hudAnimation.repeatCount = HUGE_VALF;
-	hudAnimation.duration = 0.5 * self.codeTypes.count;
-	hudAnimation.calculationMode = kCAAnimationPaced;
-	[self.hudImageView.layer addAnimation:hudAnimation forKey:@"hudAnimation"];
+    [self.hudImageView.layer removeAnimationForKey:@"hudAnimation"];
+    
+    self.hudImageView.hidden = (self.codeTypes.count == 0);
+    
+    if (self.codeTypes.count == 0) {
+        return;
+    }
+    
+    self.hudImageView.frame =CGRectMake(0, 0, 300,300);
+    
+    self.hudImageView.center=self.previewView.center;
+    /*
+     
+     UIEdgeInsets padding = UIEdgeInsetsMake(20.0f, 20.0f, 20.0f, 20.0f);
+     CGRect squareHUDRect = UIEdgeInsetsInsetRect(self.previewView.bounds, padding);
+     squareHUDRect.origin.y += self.topLayoutGuide.length;
+     squareHUDRect.size.height -= self.topLayoutGuide.length + self.bottomLayoutGuide.length;
+     if (CGRectGetHeight(squareHUDRect) > CGRectGetWidth(squareHUDRect)) {
+     squareHUDRect.origin.y += (CGRectGetHeight(squareHUDRect) - CGRectGetWidth(squareHUDRect)) * .5f;
+     squareHUDRect.size.height = CGRectGetWidth(squareHUDRect);
+     } else {
+     squareHUDRect.origin.x += (CGRectGetWidth(squareHUDRect) - CGRectGetHeight(squareHUDRect)) * .5f;
+     squareHUDRect.size.width = CGRectGetHeight(squareHUDRect);
+     }
+     self.hudImageView.frame = squareHUDRect;
+     
+     CGRect baseBounds = self.hudImageView.layer.bounds;
+     
+     NSMutableSet *takenAspectRatios = [NSMutableSet set];
+     NSMutableArray *animationKeyframes = [NSMutableArray array];
+     for (NSString *codeType in self.codeTypes) {
+     NSNumber *aspectRatio = [[self class] aspectRatioForCode:codeType];
+     if (aspectRatio == nil || [takenAspectRatios containsObject:aspectRatio]) {
+     continue; // skip unknown as well as unsupported and already present code types
+     }
+     [takenAspectRatios addObject:aspectRatio];
+     CGRect codeTypeBounds = baseBounds;
+     float rawAspectRatio = [aspectRatio floatValue];
+     if (rawAspectRatio > 1.0) {
+     codeTypeBounds.size.height /= rawAspectRatio;
+     } else {
+     codeTypeBounds.size.width *= rawAspectRatio;
+     }
+     [animationKeyframes addObject:[NSValue valueWithCGRect:codeTypeBounds]];
+     }
+     
+     // sort based on the rects area to prevent it from animating between small and large rects back and forth
+     [animationKeyframes sortUsingComparator:^NSComparisonResult(NSValue *obj1, NSValue *obj2) {
+     CGRect obj1Rect = [obj1 CGRectValue];
+     CGRect obj2Rect = [obj2 CGRectValue];
+     
+     CGFloat obj1Area = CGRectGetWidth(obj1Rect) * CGRectGetHeight(obj1Rect);
+     CGFloat obj2Area = CGRectGetWidth(obj2Rect) * CGRectGetHeight(obj2Rect);
+     
+     return [@(obj1Area) compare:@(obj2Area)];
+     }];
+     
+     [animationKeyframes addObject:animationKeyframes.firstObject]; // go around to prevent animation from jumping at the end
+     
+     CAKeyframeAnimation *hudAnimation = [CAKeyframeAnimation animationWithKeyPath:@"bounds"];
+     hudAnimation.values = animationKeyframes;
+     hudAnimation.repeatCount = HUGE_VALF;
+     hudAnimation.duration = 0.5 * self.codeTypes.count;
+     hudAnimation.calculationMode = kCAAnimationPaced;
+     [self.hudImageView.layer addAnimation:hudAnimation forKey:@"hudAnimation"];
+     */
 }
 
 - (void)updateRectOfInterest
